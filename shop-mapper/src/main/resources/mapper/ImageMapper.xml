@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+    <!--parameterType接收参数的类型  -->
+    <!--resultType返回类型  -->
+    <!--namespace="包名mapper接口"  -->
+<mapper namespace="com.fh.shop.backend.mapper.image.IImageMapper">
+
+	<select id="findImgList" resultType="image" parameterType="int">
+		select id,imgPath,productId  from t_image where  productId=#{id}
+	</select>
+
+	<insert id="addBatchImage" >
+		insert into  t_image (imgPath,productId)
+		values
+		<foreach collection="list" item="image" separator=",">
+			(#{image.imgPath},#{image.productId})
+		</foreach>
+	</insert>
+	<delete id="deleteImgIds"  >
+		delete from  t_image where id in (
+		<foreach collection="list" item="id" separator=",">
+			#{id}
+		</foreach>
+		)
+	</delete>
+
+</mapper>

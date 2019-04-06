@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+		"-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.fh.shop.backend.mapper.dept.IDeptMapper">
+
+	<select id="findPageCount" parameterType="department" resultType="long">
+		select count(*) from t_dept
+	</select>
+	<select id="findDeptZtree" resultType="department" parameterType="department">
+		select id,parentId,deptName,remark   from t_dept
+	</select>
+
+	<select id="findDepartment" resultType="department" parameterType="department">
+		select  t.* from (
+		select id,deptName,parentId,remark   from t_dept
+		)	t limit  #{start},#{length}
+	</select>
+	<insert id="addDept" parameterType="department">
+		<selectKey keyProperty="id" resultType="int" order="AFTER">
+			select  last_insert_id();
+		</selectKey>
+		insert into  t_dept (deptName,parentId,remark)
+		values (#{deptName},#{parentId},#{remark})
+	</insert>
+	<!--修改方法  -->
+	<update id="updateDept" parameterType="department" >
+		update t_dept set  deptName=#{deptName},remark=#{remark}  where id=#{id}
+	</update>
+	<!-- 批量删除方法 -->
+	<delete id="deleteIds" >
+		delete from  t_dept where id in
+		<!-- 因为传入的是一个list集合所以要拼接进行删除 -->
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+</mapper>

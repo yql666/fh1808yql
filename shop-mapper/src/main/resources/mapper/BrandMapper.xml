@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+    <!--parameterType接收参数的类型  -->
+    <!--resultType返回类型  -->
+    <!--namespace="包名mapper接口"  -->
+<mapper namespace="com.fh.shop.backend.mapper.brand.IBrandMapper">
+	<sql id="brandWhere">
+		<where>
+				<if test="brandName !=null and brandName!=''">
+					brandName like  concat('%',#{brandName},'%')
+				</if>
+				<if test="minentryTime !=null and minentryTime!=''">
+					and  entryTime >= #{minentryTime}
+				</if>
+				<if test="maxentryTime !=null and maxentryTime!=''">
+					and  entryTime &lt;= #{maxentryTime}
+				</if>
+				<if test="minupdateTime !=null and minupdateTime!=''">
+					and  updateTime >= #{minupdateTime}
+				</if>
+				<if test="maxupdateTime !=null and maxupdateTime!=''">
+					and updateTime &lt;= #{maxupdateTime}
+				</if>
+		</where>
+				<if test="property == null or property == '' ">
+					order by id desc
+				</if>
+				<if test="property != null and property != '' ">
+					order by ${property} ${sort}
+				</if>
+	</sql>
+	<select id="findPageCount" parameterType="brand" resultType="long">
+		select count(*) from t_brand 
+		<include refid="brandWhere"></include>
+	</select>
+	<select id="findBrandList" resultType="brand" >
+		select id,brandName,entryTime,updateTime from t_brand 
+	</select>  
+	<select id="findBrand" resultType="brand" parameterType="brand">
+	 	select  t.* from ( 
+		select id,brandName,entryTime,updateTime from t_brand 
+			<include refid="brandWhere"></include>
+		)	t limit  #{startPos},#{pageSize}
+	</select> 
+	<insert id="addBrand" parameterType="brand">
+	  insert into   t_brand  (brandName,entryTime,updateTime) values (#{brandName},#{entryTime},#{updateTime})
+	</insert>
+	<delete id="deleteBrand" parameterType="int">
+		delete from t_brand where id =#{id}
+	</delete>
+	<select id="toUpdate" parameterType="int" resultType="brand">
+		select id,brandName from t_brand  where id=#{id}
+	</select>
+	<update id="update" parameterType="brand">
+		update t_brand set brandName=#{brandName},updateTime=#{updateTime} where id=#{id}
+	</update>
+	<delete id="deleteIds">
+		delete from t_brand where id in 
+			<foreach collection="list" item="id" open="(" close=")" separator="," >
+				#{id}
+			</foreach>
+	</delete>
+</mapper>

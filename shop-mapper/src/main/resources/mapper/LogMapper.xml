@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+    "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+    <!--parameterType接收参数的类型  -->
+    <!--resultType返回类型  -->
+    <!--namespace="包名mapper接口"  -->
+<mapper namespace="com.fh.shop.backend.mapper.log.ILogMapper">
+
+	<sql id="logWhere">
+		<where>
+			<if test="userName!=null and userName!='' ">
+				userName like  concat('%',#{userName},'%')
+			</if>
+			<if test="status!=null and status>-1 ">
+				and status=#{status}
+			</if>
+			<if test="minCreateTime!=null ">
+				and createTime>=#{minCreateTime}
+			</if>
+			<if test="maxCreateTime!=null ">
+				and createTime &lt;=#{maxCreateTime}
+			</if>
+			<if test="minUseTime!=null ">
+				and useTime>=#{minUseTime}
+			</if>
+			<if test="maxUseTime!=null ">
+				and useTime&lt;=#{maxUseTime}
+			</if>
+		</where>
+	</sql>
+	<select id="findPageCount"  resultType="long" parameterType="log">
+		select count(*) from t_logs
+		<include refid="logWhere"></include>
+	</select>
+	<select id="findLogList"  resultType="log" parameterType="log">
+		select  t.* from (
+		select id,userName,info,status,createTime,useTime,ipAdd,content from t_logs
+		<include refid="logWhere"></include>
+		order by id desc
+		)	t  limit  #{start},#{length}
+	</select>
+
+	<insert  id="addLog"   parameterType="log">
+		insert into t_logs (userName,info,status,createTime,useTime,ipAdd,content)
+		values(#{userName},#{info},#{status},#{createTime},#{useTime},#{ipAdd},#{content})
+	</insert>
+
+</mapper>

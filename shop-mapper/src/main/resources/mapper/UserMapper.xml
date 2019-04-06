@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC  
+    "-//mybatis.org//DTD Mapper 3.0//EN"  
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+    <!--parameterType接收参数的类型  -->
+    <!--resultType返回类型  -->
+    <!--namespace="包名mapper接口"  -->
+<mapper namespace="com.fh.shop.backend.mapper.user.IUserMapper">
+
+	<sql id="userWhere">
+		<where>
+			<if test="userName!=null and userName!=''">
+				userName like  concat('%',#{userName},'%')
+			</if>
+			<if test="userRealName !=null and userRealName!=''">
+				and userRealName like  concat('%',#{userRealName},'%')
+			</if>
+			<if test="sex !=null ">
+				and sex=#{sex}
+			</if>
+			<if test="status !=null ">
+				and status=#{status}
+			</if>
+			<if test="minSelary !=null and minSelary >=0">
+				and 	selary 	>= 	#{minSelary}
+			</if>
+			<if test="maxSelary !=null and maxSelary >=0">
+				and 	selary  &lt;= #{maxSelary}
+			</if>
+			<if test="minBirthday !=null">
+				and  birthday >= #{minBirthday}
+			</if>
+			<if test="maxBirthday !=null">
+				and  birthday &lt;= #{maxBirthday}
+			</if>
+			<if test="listArr!=null ">
+				and  deptid in
+				<foreach collection="listArr" item="id" separator="," open="("   close=")">
+					#{id}
+				</foreach>
+			</if>
+
+		</where>
+			<if test="property == null and property == '' ">
+					  order by u.id
+			</if>
+			<if test="property != null and property != '' ">
+				order by ${property} ${sort}
+			</if>
+
+
+	</sql>
+	<select id="findUser" resultType="user" parameterType="user">
+		select id,userName,password,salt,loginTime,status,errorCount,loginCount,errorLogTime from t_productuset where userName=#{userName}
+	</select>
+	<select id="findPageCount" parameterType="user" resultType="long">
+		select count(*) from t_productuset
+		<include refid="userWhere"></include>
+	</select>
+	<resultMap id="userDeptMap" type="user">
+		<result column="deptid" property="department.id" />
+		<result column="deptName" property="department.deptName" />
+	</resultMap>
+
+	<select id="findDeptList" resultMap="userDeptMap"   >
+		select birthday,sex,userRealName,selary,deptName from t_productuset u
+		left join t_dept d on u.deptId=d.id where deptId in
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</select>
+
+	<select id="findUserList" resultMap="userDeptMap"  parameterType="user" >
+		select  t.* from (
+		select u.id,userName,password,status,birthday,sex,userRealName,selary,deptName,headPath from t_productuset u
+		left join t_dept d on u.deptId=d.id
+		<include refid="userWhere"></include>
+		)	t limit  #{start},#{length}
+	</select>
+	<insert id="addUser" parameterType="user" >
+			insert into t_productuset (userName,password,salt,birthday,sex,userRealName,selary,headPath)
+			values(#{userName},#{password},#{salt},#{birthday},#{sex},#{userRealName},#{selary},#{headPath})
+	</insert>
+	<insert id="addUserDialog" parameterType="user" >
+			insert into t_productuset (userName,password,salt,birthday,sex,userRealName,selary,deptid,headPath)
+			values(#{userName},#{password},#{salt},#{birthday},#{sex},#{userRealName},#{selary},#{department.id},#{headPath})
+	</insert>
+	<update id="updateUser" parameterType="user">
+			update t_productuset  set loginTime=#{loginTime},status=#{status},errorCount=0 where userName=#{userName}
+	</update>
+	<update id="updateUserLogCount" parameterType="user">
+			update t_productuset  set loginCount=loginCount+1 where userName=#{userName}
+	</update>
+	<update id="resetLogCount" parameterType="user">
+			update t_productuset  set loginCount=1,errorCount=0 where userName=#{userName}
+	</update>
+	<update id="updateUserStatus" parameterType="user">
+			update t_productuset  set status=#{status} where userName=#{userName}
+	</update>
+	<update id="updateUserErrorCount" parameterType="user">
+			update t_productuset  set errorLogTime=#{errorLogTime},errorCount=errorCount+1 where userName=#{userName}
+	</update>
+	<update id="updateErrorLogTime" parameterType="user">
+			update t_productuset  set errorLogTime=#{errorLogTime},errorCount=1 where userName=#{userName}
+	</update>
+
+	<update id="resetStatus" parameterType="user">
+			update t_productuset  set status=#{status},errorCount=0 where id=#{id}
+	</update>
+
+	<update id="updateUserInfo" parameterType="user">
+			update t_productuset set
+			userName=#{userName},
+			userRealName=#{userRealName},
+			password=#{password},
+			birthday=#{birthday},
+			sex=#{sex},
+			selary=#{selary},
+			deptid=#{department.id},
+			status=1,
+			headPath=#{headPath}
+			where id=#{id}
+	</update>
+	<update id="updateUserDept" parameterType="user">
+			update t_productuset set deptid=#{department.id} where id in
+				<foreach collection="listArr" separator="," item="id"  open="(" close=")">
+					#{id}
+				</foreach>
+	</update>
+	<delete id="deleteUser" parameterType="user" >
+		delete from  t_productuset where id = #{id}
+	</delete>
+
+	<select id="toUpdateUser" parameterType="int" resultMap="userDeptMap">
+			select u.id,userName,password,status,birthday,sex,userRealName,selary,d.deptName,deptid,headPath from t_productuset u
+			left join t_dept d on u.deptId=d.id where u.id=#{id}
+	</select>
+
+	<delete id="deleteIds" >
+		delete from  t_productuset where id in
+		<!-- 因为传入的是一个list集合所以要拼接进行删除 -->
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+
+	<delete id="deleteByPids" >
+		delete from  t_productuset where deptid in
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+</mapper>

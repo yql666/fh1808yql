@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+    "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+    <!--parameterType接收参数的类型  -->
+    <!--resultType返回类型  -->
+    <!--namespace="包名mapper接口"  -->
+<mapper namespace="com.fh.shop.backend.mapper.product.IProductMapper">
+	<!-- 拼接模糊查询条件 -->
+	<sql id="productWhere">
+		<where>
+				<if test="productName !=null and productName!=''">
+					productName like  concat('%',#{productName},'%')
+				</if>
+				<if test="minPrice !=null and minPrice >=0">
+					and 	price 	>= 	#{minPrice}
+				</if>
+				<if test="maxPrice !=null and maxPrice >=0">
+					and 	price  &lt;= #{maxPrice}
+				</if>
+				<if test="minInsertTime !=null">
+					and  insertTime >= #{minInsertTime}
+				</if>
+				<if test="maxInsertTime !=null">
+					and  insertTime &lt;= #{maxInsertTime}
+				</if>
+				<if test="minUpdateTime !=null">
+					and  p.updateTime >= #{minUpdateTime}
+				</if>
+				<if test="maxUpdateTime !=null">
+					and  p.updateTime &lt;= #{maxUpdateTime}
+				</if>
+				<if test="brand.id !=null and brand.id!=-1">
+					and  brandid = #{brand.id}
+				</if>
+		</where>
+			<if test="property==null or  property==''  " >
+						order by p.id desc
+			</if>
+			<if test="property !=null and  property !=''  " >
+						order by p.${property} ${sort}
+			</if>
+	</sql>
+
+
+	<!-- 查询回传Map -->
+	<resultMap id="productMap" type="product">
+		<result column="id" property="id" />
+		<result column="productName" property="productName" />
+		<result column="price" property="productPrice" />
+		<result column="insertTime" property="insertTime" />
+		<result column="updateTime" property="updateTime" />
+		<result column="brandName" property="brand.brandName" />
+		<result column="brandId" property="brand.id" />
+		<result column="productPath" property="productPath" />
+	</resultMap>
+	<!-- 删除品牌时判断查询 -->
+	<select id="findBrandId" parameterType="int" resultType="product">
+		select id from t_product where brandId=#{id}
+	</select>
+	<!-- 分页查询Count计数查询 -->
+	<select id="findPageCount" parameterType="product" resultType="long">
+		select count(*) from t_product p
+		left join t_brand b on p.brandId=b.id
+		<include refid="productWhere"></include>
+	</select>
+
+	<!-- 两表联查  -->
+	<select id="findProduct" resultMap="productMap" parameterType="product">
+	 	select  t.* from (
+		select p.id,productName,price,p.insertTime,p.updateTime,b.brandName,productPath   from t_product p
+		left join t_brand b on p.brandId=b.id
+			<include refid="productWhere"></include>
+		)	t limit  #{start},#{length}
+	</select>
+	<select id="findProductList" resultMap="productMap" parameterType="product">
+		select p.id,productName,price,p.insertTime,p.updateTime,b.brandName,productPath  from t_product p
+		left join t_brand b on p.brandId=b.id
+		<include refid="productWhere"></include>
+	</select>
+	<!--id="方法名"  -->
+	<!--parameterType="实体类"  -->
+	<!-- 增加方法 -->
+	<insert id="addProduct" parameterType="product">
+		<selectKey resultType="int" keyProperty="id" order="AFTER">
+			select last_insert_id();
+		</selectKey>
+		insert into  t_product (productName,price,insertTime,updateTime,brandId,productPath)
+		values (#{productName},#{productPrice},#{insertTime},#{updateTime},#{brand.id},#{productPath})
+	</insert>
+	<!-- 单个删除 -->
+	<delete id="deleteProduct" parameterType="product" >
+		delete from  t_product where id = #{id}
+	</delete>
+	<!-- 回显方法 -->
+	<select id="toProduct" parameterType="int" resultMap="productMap">
+			select id,productName,price,brandId,productPath from t_product  where id=#{id}
+	</select>
+	<!--修改方法  -->
+	<update id="update" parameterType="product" >
+		update t_product set  productName=#{productName},price=#{productPrice},updateTime=#{updateTime},brandId=#{brand.id},productPath=#{productPath}  where id=#{id}
+	</update>
+	<!-- 批量删除方法 -->
+	<delete id="deleteIds" >
+		delete from  t_product where id in
+		<!-- 因为传入的是一个list集合所以要拼接进行删除 -->
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+            #{id}
+		</foreach>
+	</delete>
+
+	<select id="findProductApi" resultMap="productMap" >
+		select id,productName,price,productPath  from t_product
+	</select>
+
+</mapper>

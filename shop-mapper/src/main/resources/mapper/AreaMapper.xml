@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC
+		"-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="com.fh.shop.backend.mapper.area.IAreaMapper">
+
+	<select id="findAreaZtree" resultType="area">
+		select id,pid,areaName,areaType   from t_areatable
+	</select>
+
+	<insert id="addArea" parameterType="area">
+		<selectKey keyProperty="id" resultType="int" order="AFTER">
+			select  last_insert_id();
+		</selectKey>
+		insert into  t_areatable (areaName,pid)
+		values (#{areaName},#{pid})
+	</insert>
+	<!--修改方法  -->
+	<update id="updateArea" parameterType="area" >
+		update t_areatable set  areaName=#{areaName}  where id=#{id}
+	</update>
+	<!-- 批量删除方法 -->
+	<delete id="deleteIds" >
+		delete from  t_areatable where id in
+		<!-- 因为传入的是一个list集合所以要拼接进行删除 -->
+		<foreach collection="list" item="id" open="(" close=")" separator=",">
+			#{id}
+		</foreach>
+	</delete>
+</mapper>
